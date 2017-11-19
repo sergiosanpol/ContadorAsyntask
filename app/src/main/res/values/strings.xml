@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">ContadorAsyntask</string>
+    <string name="comenzar">Comenzar Contador</string>
+    <string name="parar">Para Contador</string>
+</resources>
