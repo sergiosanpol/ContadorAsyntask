@@ -15,9 +15,8 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView cont;
     private Button start, stop;
-    private boolean activo = false;
     private ProgressBar bar;
-    private Contador contador;
+    private Contador contador = new Contador();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
      * @param v El botón de la vista "comenzar contador"
      */
     public void comenzarCont(View v) {
-        if(!activo) { //Si hay algún contador activo no inicia el hilo
+        if(!contador.getStatus().equals(AsyncTask.Status.RUNNING)) { //Si hay algún contador activo no inicia el hilo
             contador = new Contador();
             contador.execute();
         }
@@ -53,8 +52,9 @@ public class MainActivity extends AppCompatActivity {
      * @param v
      */
     public void cancelarCont(View v){
-        //Si contador no está inicializado, no podemos para el contador ya que no hay ningún proceso de contador activo
-        if(contador != null) {
+        //Si contador está ejecitandose podremos para el hilo, si no, no podemos parar el contador ya que no
+        // hay ningún proceso de contador activo
+        if(contador.getStatus().equals(AsyncTask.Status.RUNNING)) {
             contador.cancel(true);
             Toast.makeText(this, "Contador parado", Toast.LENGTH_LONG).show();
         }
@@ -66,16 +66,14 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPreExecute() {
-            //Antes de la ejecución del proceso. Ponemos activo a true para inicar que hay un proceso activo
-            //Inicializamos el contador y la barra de proceso a 0
-            activo = true;
+            //Antes de la ejecución del proceso. Inicializamos el contador y la barra de proceso a 0
             cont.setText("0");
             bar.setProgress(0);
         }
 
         @Override
         protected Void doInBackground(Void... n) {
-            //Hacemos las iteraciones del for hasta 10
+            //Hacemos las iteraciones del for hasta 10 o se cancele el proceso
             for (int i = 0; i <= 10 && !isCancelled(); i++) {
                 //Actualizamos la barra de proceso. Este método le envia la información al método onProgressUpdate
                 publishProgress(i);
@@ -87,29 +85,10 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onProgressUpdate(final Integer... porc) {
-            //Aquí se actualizará la barra de poceso y la vista que muestra los números del contador, que debemos realizar esa actualización
-            //desde el hilo principal ya que no podemos hacerlo en un hilo secundario
+            //Aquí se actualizará la barra de poceso y la vista que muestra los números del contador
             bar.setProgress(porc[0]);
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    cont.setText(porc[0].toString());
-                }
-            });
-        }
+            cont.setText(porc[0].toString());
 
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            //Cuando termina el proceso, ponemos a false el booleano activo para que se pueda ejecutar de nuevo el proceso
-            activo = false;
-        }
-
-        @Override
-        protected void onCancelled() {
-            //Cuando se cancela activo se vuelve falso para poder iniciar de nuevo la cuenta
-            if(activo == true) {
-                activo = false;
-            }
         }
 
     }
